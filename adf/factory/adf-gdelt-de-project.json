@@ -1,0 +1,15 @@
+{
+	"name": "adf-gdelt-de-project",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "uaenorth",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "954443cd-6584-4dec-915e-b4925c91561f",
+		"tenantId": "16ecea1c-e73a-41b5-a7af-a0284d8235df"
+	}
+}

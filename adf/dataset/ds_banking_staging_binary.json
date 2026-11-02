@@ -1,0 +1,20 @@
+{
+	"name": "ds_banking_staging_binary",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_adls_gdelt",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "accounts.csv",
+				"folderPath": "banking-staging",
+				"fileSystem": "raw"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
