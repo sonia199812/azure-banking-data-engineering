@@ -47,6 +47,37 @@
 						"type": "DatasetReference"
 					}
 				]
+			},
+			{
+				"name": "trigger_databricks_job",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "copy_banking_transactions",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"method": "POST",
+					"url": "https://adb-7405619223228293.13.azuredatabricks.net/api/2.1/jobs/run-now",
+					"body": {
+						"job_id": 1048424532914655
+					},
+					"authentication": {
+						"type": "MSI",
+						"resource": "2ff814a6-3304-4ab8-85cb-cd0e6f879c1d"
+					}
+				}
 			}
 		],
 		"annotations": [],
