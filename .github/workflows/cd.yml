@@ -1,0 +1,51 @@
+
+name: Banking Databricks CD
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy banking notebooks
+    runs-on: ubuntu-latest
+
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ secrets.DATABRICKS_CLIENT_ID }}
+      DATABRICKS_CLIENT_SECRET: ${{ secrets.DATABRICKS_CLIENT_SECRET }}
+      DATABRICKS_AUTH_TYPE: oauth-m2m
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Databricks CLI
+        uses: databricks/setup-cli@v0.9.0
+
+      - name: Verify Databricks authentication
+        run: databricks current-user me
+
+      - name: Prepare notebook deployment folder
+        run: |
+          mkdir -p deployment-notebooks
+          find . -maxdepth 1 -type f \
+            \( -name "*.ipynb" -o -name "*.py" -o -name "*.sql" \) \
+            -exec cp {} deployment-notebooks/ \;
+
+          if [ -z "$(ls -A deployment-notebooks)" ]; then
+            echo "No notebook files found in repository root"
+            exit 1
+          fi
+
+          echo "Files selected for deployment:"
+          ls -la deployment-notebooks
+
+      - name: Deploy notebooks to Databricks
+        run: |
+          databricks workspace import-dir \
+            deployment-notebooks \
+            /Shared/github-cicd/banking \
+            --overwrite
