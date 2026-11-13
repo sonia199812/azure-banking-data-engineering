@@ -1,150 +1,90 @@
-# Azure Banking Data Engineering | End-to-End Lakehouse Pipeline
+# Azure Banking Data Engineering Pipeline
 
-**Azure Data Factory · ADLS Gen2 · Azure Databricks · PySpark · Delta Lake · Unity Catalog · GitHub Actions**
+### End-to-End Data Engineering with Azure Databricks
 
-An end-to-end banking data engineering portfolio project demonstrating incremental ingestion, data validation, Delta Lake upserts, dimensional modeling, workflow orchestration, and CI/CD practices on Azure.
+An end-to-end banking data engineering project built using **Azure Data Factory, Azure Data Lake Storage Gen2, Azure Databricks, PySpark, and Delta Lake**.
 
-## 1. Project Overview
+The project demonstrates the design and implementation of a scalable-style data processing architecture using the **Medallion Architecture (Bronze, Silver, Gold)**, with a focus on incremental data processing, data quality, orchestration, and automated code deployment.
 
-This project implements a Medallion Architecture (Bronze, Silver, Gold) to process synthetic banking datasets covering customers, accounts, and financial transactions.
-
-The solution focuses on building reliable, incremental data pipelines using Azure Databricks, with Azure Data Factory for ingestion and orchestration.
-
-**Key engineering objectives:**
-- Ingest banking datasets from Azure Data Lake Storage.
-- Process newly arriving files incrementally using Databricks Auto Loader.
-- Apply data quality checks and isolate invalid records.
-- Implement incremental Delta Lake MERGE operations.
-- Build curated analytical tables using dimensional modeling.
-- Orchestrate dependent notebook tasks using Databricks Lakeflow Jobs.
-- Validate failure scenarios, schema changes, and duplicate handling.
-- Introduce GitHub-based CI/CD for version control and deployment.
-
-## 2. Technology Stack
-
-| Component | Technology | Purpose |
-|---|---|---|
-| Cloud platform | Microsoft Azure | Infrastructure |
-| Data ingestion | Azure Data Factory | Source ingestion and workflow integration |
-| Data lake | ADLS Gen2 | Cloud object storage |
-| Processing | Azure Databricks, PySpark | Distributed transformations |
-| Storage format | Delta Lake | ACID transactions and incremental updates |
-| Governance | Unity Catalog | Catalog and schema organization |
-| Incremental ingestion | Auto Loader | New-file processing |
-| Incremental processing | Delta Change Data Feed | Process source changes |
-| Orchestration | Lakeflow Jobs | Task dependencies and execution |
-| Version control | GitHub | Source management |
-| CI/CD | GitHub Actions, Databricks CLI | Validation and notebook deployment |
-
-## 3. Architecture
+## Architecture Overview
 
 ```text
-Synthetic Banking Data
-(Transactions, Customers, Accounts)
-                |
-                v
-       Azure Data Factory
-                |
-                v
-          ADLS Gen2
-         (Raw CSV Files)
-                |
-                v
-     Azure Databricks Auto Loader
-                |
-                v
-       BRONZE — Delta Tables
-         Raw Ingestion
-                |
-                v
-      SILVER — Delta Tables
-     Validation / Deduplication
-       CDC / MERGE / Quarantine
-                |
-                v
-       GOLD — Delta Tables
-       Facts / Dimensions
-       Business Aggregations
-                |
-                v
-        Databricks SQL
-      Analytical Query Layer
+Banking Data Sources
+(Customers, Accounts, Transactions)
+             |
+             v
+     Azure Data Factory
+             |
+             v
+        ADLS Gen2
+       (Raw Storage)
+             |
+             v
+     Azure Databricks
+             |
+    +--------+--------+
+    |        |        |
+  Bronze   Silver    Gold
+ Ingestion  Quality  Analytics
+    |        |        |
+    +--------+--------+
+             |
+             v
+     Curated Delta Tables
 ```
 
-**Orchestration:** Databricks Lakeflow Jobs coordinates Bronze, Silver, and Gold processing. Azure Data Factory has also been validated for triggering the Databricks job through its REST API.
+The pipeline follows a layered architecture that separates raw ingestion, data transformation, and analytical processing.
 
-## 4. Data Processing Design
+## Technology Stack
 
-### Bronze Layer — Incremental Ingestion
-
-The Bronze layer ingests source CSV files using Databricks Auto Loader.
-
-Implemented capabilities:
-- Incremental file discovery and processing
-- Schema tracking
-- Checkpoint-based progress tracking
-- Delta Lake storage
-- Ingestion metadata
-- Change Data Feed enabled on source tables
-
-Auto Loader is used to avoid repeatedly processing previously ingested files.
-
-### Silver Layer — Data Quality and Incremental Upserts
-
-The Silver layer transforms raw data into validated, deduplicated datasets.
-
-Implemented capabilities:
-- Data type conversion and validation
-- Invalid transaction quarantine
-- Duplicate handling
-- Change Data Feed-based incremental processing
-- `foreachBatch` processing
-- Delta Lake `MERGE` for incremental upserts
-- Checkpoint-based recovery state
-
-Invalid records are isolated instead of being silently discarded.
-
-### Gold Layer — Analytical Data Model
-
-The Gold layer provides curated datasets for downstream analytical queries.
-
-**Fact and dimension tables:**
-- `fact_transactions`
-- `dim_customer`
-- `dim_account`
-
-**Analytical summaries:**
-- `gold_daily_transactions`
-- `gold_fraud_summary`
-
-The model supports transaction analysis, daily financial summaries, and fraud-related reporting.
-
-The transaction source does not contain an account identifier, so the project does not assume a direct transaction-to-account relationship.
-
-## 5. Pipeline Orchestration
-
-A Databricks Lakeflow Job coordinates seven processing tasks:
-
-- Three Bronze ingestion tasks
-- Three Silver transformation tasks
-- One Gold processing task
-
-Task dependencies ensure that downstream processing starts after its required upstream tasks complete.
-
-Azure Data Factory integration was separately tested using a Web activity that successfully triggered the Databricks job through the Jobs API.
-
-The complete ADF Copy Data → Databricks Web activity sequence has not been validated as a single end-to-end run.
-
-## 7. Reliability and Troubleshooting
-
-Isolated practice exercises were used to explore data engineering failure scenarios without modifying the main banking pipeline.
-
-| Scenario | Validation |
+| Technology | Purpose |
 |---|---|
-| Schema drift | Demonstrated a renamed source column causing a schema mismatch and normalized the incoming schema |
-| Duplicate records | Demonstrated duplicate ingestion and deduplication |
-| Delta MERGE | Tested existing-key matching and new-record insertion |
-| Data skew | Created a skewed dataset to investigate uneven key distribution |
-| Failure recovery | Explored failure handling separately from the production-style workflow |
+| Azure Data Factory | Data ingestion and orchestration integration |
+| ADLS Gen2 | Cloud data lake storage |
+| Azure Databricks | Distributed data processing |
+| PySpark / Spark SQL | Data transformation |
+| Delta Lake | Reliable storage and incremental updates |
+| Unity Catalog | Data organization and governance |
+| Lakeflow Jobs | Workflow orchestration |
+| GitHub Actions | CI/CD automation |
 
-Additional recovery, performance, and repeated-run idempotency testing remain opportunities for improvement.
+## Solution Design
+
+**Bronze — Data Ingestion**
+
+Banking datasets are incrementally ingested from cloud storage using Databricks Auto Loader and persisted as Delta tables. Schema tracking and checkpoints support reliable processing.
+
+**Silver — Data Transformation**
+
+Raw data is validated, standardized, and deduplicated. Delta Change Data Feed and MERGE operations support incremental processing, while invalid records are isolated for investigation.
+
+**Gold — Analytical Modeling**
+
+Curated fact, dimension, and aggregated tables support transaction analysis, fraud reporting, and other banking analytics use cases.
+
+## Orchestration and CI/CD
+
+Databricks Lakeflow Jobs coordinates the processing pipeline across Bronze, Silver, and Gold layers.
+
+GitHub Actions provides basic CI validation and a manually triggered CD workflow. Notebook deployment to Azure Databricks is authenticated through a service principal and performed using the Databricks CLI.
+
+## Engineering Highlights
+
+- Incremental ingestion and processing using Auto Loader and Delta Change Data Feed.
+- Data quality validation, deduplication, and quarantine handling.
+- Delta Lake MERGE operations for incremental upserts.
+- Analytical data modeling with fact and dimension tables.
+- Workflow orchestration with task dependencies.
+- Version-controlled development and automated notebook deployment.
+
+## Project Scope
+
+This project uses synthetic banking datasets to demonstrate practical Azure data engineering patterns.
+
+The core Bronze-to-Gold pipeline and GitHub Actions notebook deployment have been successfully tested. Further enhancements could include automated notebook-level tests, expanded monitoring, and production environment promotion.
+
+## Repository
+
+**Source Code:** https://github.com/sonia199812/azure-banking-data-engineering
+
+**Project Focus:** Azure Data Engineering | Databricks | PySpark | Delta Lake | Incremental ETL | Data Quality | CI/CD
