@@ -27,21 +27,24 @@ jobs:
 
       - name: Verify Databricks authentication
         run: databricks current-user me
-
+    
+      
       - name: Prepare notebook deployment folder
         run: |
           mkdir -p deployment-notebooks
-          find . -maxdepth 1 -type f \
+
+          find notebooks -type f \
             \( -name "*.ipynb" -o -name "*.py" -o -name "*.sql" \) \
             -exec cp {} deployment-notebooks/ \;
 
           if [ -z "$(ls -A deployment-notebooks)" ]; then
-            echo "No notebook files found in repository root"
+            echo "No notebook files found"
             exit 1
           fi
 
           echo "Files selected for deployment:"
           ls -la deployment-notebooks
+
 
       - name: Deploy notebooks to Databricks
         run: |
